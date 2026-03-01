@@ -585,6 +585,29 @@ body {
   box-shadow: none;
 }
 
+.bmc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  height: 42px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Cookie', cursive;
+  background: #FFDD00;
+  color: #000;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.bmc-btn:hover {
+  transform: scale(1.05);
+}
+
 /* ============================================
    Playground section
    ============================================ */
@@ -877,6 +900,8 @@ code {
   min-height: 108px;
   border: 1px solid var(--border);
   margin-bottom: 1.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .playground-controls {

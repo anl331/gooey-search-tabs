@@ -71,10 +71,11 @@ body {
 .demo-area {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   background: #f0f0f0;
   border-radius: 16px;
   padding: 2.5rem 2rem;
+  min-height: 108px;
 }
 
 .preset-buttons {

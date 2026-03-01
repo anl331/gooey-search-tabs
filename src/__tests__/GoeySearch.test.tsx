@@ -146,7 +146,7 @@ describe('GoeySearch', () => {
   })
 
   // --- Accessibility ---
-  it('has role="search" on the container', () => {
+  it('has role="search" on the wrapper', () => {
     render(<GoeySearch tabs={sampleTabs} />)
     expect(screen.getByRole('search')).toBeInTheDocument()
   })
@@ -157,9 +157,9 @@ describe('GoeySearch', () => {
   })
 
   // --- Custom classNames ---
-  it('applies custom className to container', () => {
-    const { container } = render(<GoeySearch tabs={sampleTabs} className="my-custom" />)
-    expect(container.querySelector('.goey-search-container')).toHaveClass('my-custom')
+  it('applies custom className to wrapper', () => {
+    render(<GoeySearch tabs={sampleTabs} className="my-custom" />)
+    expect(screen.getByRole('search')).toHaveClass('my-custom')
   })
 
   // --- Without tabs ---

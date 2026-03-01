@@ -1,42 +1,49 @@
 /* ============================================
-   Container — pill-shaped outer wrapper
+   Wrapper — flex row with gap between elements.
+   Width is locked after first paint to prevent
+   any layout shift during morph transitions.
    ============================================ */
-.goey-search-container {
+.goey-search-wrapper {
   display: inline-flex;
   align-items: center;
-  background: #ffffff;
-  border-radius: 999px;
-  padding: 4px;
-  gap: 4px;
+  gap: 8px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', sans-serif;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
-  position: relative;
-  overflow: hidden;
 }
 
 /* ============================================
-   Search trigger button (circle)
+   Search bar — always a pill, content drives width.
+   Collapsed: shrink-wraps the icon (looks like a circle).
+   Expanded: grows as the input animates in.
+   ============================================ */
+.goey-search-bar {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  padding: 0 6px;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   Search trigger button (the magnifying glass)
    ============================================ */
 .goey-search-trigger {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: none;
-  background: #f3f4f6;
+  background: transparent;
   color: #374151;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.15s ease;
   outline: none;
   -webkit-tap-highlight-color: transparent;
-}
-
-.goey-search-trigger:hover {
-  background: #e5e7eb;
 }
 
 .goey-search-trigger:focus-visible {
@@ -45,37 +52,80 @@
 }
 
 /* ============================================
-   Tab list
+   Right slot — grid stacking so the morphing
+   background, tabs content, and close content
+   all occupy the same cell.
    ============================================ */
-.goey-search-tabs {
-  display: flex;
+.goey-search-right-slot {
+  display: grid;
   align-items: center;
+  justify-items: end;
+  flex: 1;
+  min-width: 0;
+}
+
+.goey-search-right-slot > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+/* ============================================
+   Morphing background — shared layoutId morphs
+   from the wide tabs pill shape to the small
+   close button circle and back.
+   ============================================ */
+.goey-search-tabs-bg {
+  width: 100%;
+  height: 44px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.goey-search-close-bubble {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  justify-self: end;
+}
+
+/* ============================================
+   Tabs content — sits on top of the morphing bg
+   ============================================ */
+.goey-search-tabs-content {
+  display: flex;
+  align-items: stretch;
   gap: 2px;
-  padding-right: 4px;
+  height: 44px;
+  padding: 4px;
+  position: relative;
+  z-index: 1;
 }
 
 .goey-search-tab {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 14px;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px;
   border-radius: 999px;
   border: none;
   background: transparent;
-  color: #6b7280;
-  font-size: 13px;
+  color: #374151;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s ease, color 0.15s ease;
   font-family: inherit;
   outline: none;
   -webkit-tap-highlight-color: transparent;
 }
 
 .goey-search-tab:hover {
-  background: #f3f4f6;
-  color: #374151;
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .goey-search-tab:focus-visible {
@@ -83,13 +133,28 @@
   outline-offset: -2px;
 }
 
-.goey-search-tab--active {
-  background: #fce7f3;
-  color: #db2777;
+/* ============================================
+   Tab active indicator — slides between tabs
+   using Framer Motion layoutId
+   ============================================ */
+.goey-search-tab-indicator {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: #fee2e2;
+  z-index: 0;
 }
 
-.goey-search-tab--active:hover {
-  background: #fbcfe8;
+.goey-search-tab-content {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.goey-search-tab[aria-selected="true"] {
+  color: #dc2626;
 }
 
 .goey-search-tab-icon {
@@ -100,57 +165,62 @@
 }
 
 /* ============================================
-   Search input (expanded state)
+   Close button content — sits on top of the
+   morphing bg, aligned to the right
    ============================================ */
-.goey-search-input-wrapper {
-  flex: 1;
+.goey-search-close-content {
   display: flex;
   align-items: center;
-  min-width: 0;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: #374151;
+  cursor: pointer;
+  border-radius: 50%;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  z-index: 1;
+  justify-self: end;
+}
+
+.goey-search-close-content:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.goey-search-close-content:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* When no morphing bg exists (no-tabs variant), give close button its own bg */
+.goey-search-right-slot:not(:has(.goey-search-tabs-bg, .goey-search-close-bubble)) .goey-search-close-content {
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* ============================================
+   Search input (inside the expanded bar)
+   ============================================ */
+.goey-search-input-wrapper {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
 }
 
 .goey-search-input {
-  flex: 1;
+  width: 100%;
   border: none;
   background: transparent;
   font-size: 14px;
   font-family: inherit;
   color: #1f2937;
   outline: none;
-  padding: 8px 12px;
-  min-width: 0;
+  padding: 8px 0 8px 12px;
 }
 
 .goey-search-input::placeholder {
   color: #9ca3af;
-}
-
-/* ============================================
-   Close button (expanded state)
-   ============================================ */
-.goey-search-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: #f3f4f6;
-  color: #6b7280;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.15s ease, color 0.15s ease;
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.goey-search-close:hover {
-  background: #e5e7eb;
-  color: #374151;
-}
-
-.goey-search-close:focus-visible {
-  outline: 2px solid #6366f1;
-  outline-offset: 2px;
 }

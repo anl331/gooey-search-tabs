@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useId } from 'react'
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
+import { motion, AnimatePresence, LayoutGroup, useAnimationControls } from 'framer-motion'
 import type { GoeySearchProps } from '../types'
 import { animationPresets } from '../presets'
 import { SearchIcon } from './SearchIcon'
@@ -43,6 +43,7 @@ export const GoeySearch = ({
   const inputRef = useRef<HTMLInputElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const [lockedWidth, setLockedWidth] = useState<number | null>(null)
+  const barControls = useAnimationControls()
 
   const searchValue = controlledValue ?? internalValue
   const currentActiveTab = controlledActiveTab ?? internalActiveTab
@@ -136,6 +137,27 @@ export const GoeySearch = ({
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Squish the bar after collapse morph settles (the spring can't naturally
+  // undershoot 44px since input width clips at 0, so we add a scaleX pulse)
+  useEffect(() => {
+    if (!expanded && hasTabs) {
+      const delay = (FADE_DUR + morphSettleTime * 0.7) * 1000
+      const timer = setTimeout(async () => {
+        await barControls.start({ scaleX: 0.9 }, { duration: 0.06 })
+        barControls.start({ scaleX: 1 }, {
+          type: 'spring',
+          bounce: Math.min(bounce + 0.1, 0.4),
+          duration: 0.35,
+        })
+      }, delay)
+      return () => {
+        clearTimeout(timer)
+        barControls.stop()
+        barControls.set({ scaleX: 1 })
+      }
+    }
+  }, [expanded, hasTabs, barControls, bounce, morphSettleTime])
+
   // Input transition delayed by FADE_DUR so tabs/close fades first
   const inputTransition = {
     ...transition,
@@ -164,7 +186,7 @@ export const GoeySearch = ({
         {/* Left side: bar grows as input springs in, pushing right-slot.
             The input spring creates the bounce — bar overshoots on expand,
             and on collapse the bounce-back compresses the right-slot from the left. */}
-        <div className="goey-search-bar">
+        <motion.div className="goey-search-bar" animate={barControls}>
           <button
             className={`goey-search-trigger ${classNames.searchButton ?? ''}`.trim()}
             onClick={expanded ? undefined : handleExpand}
@@ -197,7 +219,7 @@ export const GoeySearch = ({
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
 
         {/* Right side: pill that morphs from tabs to close.
             Width is flex-driven (passively follows the bar's spring).

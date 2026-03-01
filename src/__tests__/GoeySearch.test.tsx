@@ -28,10 +28,17 @@ vi.mock('framer-motion', () => {
     }
   )
 
+  const useAnimationControls = () => ({
+    start: () => Promise.resolve(),
+    stop: () => {},
+    set: () => {},
+  })
+
   return {
     motion,
     AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
     LayoutGroup: ({ children }: { children: React.ReactNode }) => children,
+    useAnimationControls,
   }
 })
 

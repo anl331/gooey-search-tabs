@@ -6,7 +6,7 @@ import { SearchIcon } from './SearchIcon'
 import { CloseIcon } from './CloseIcon'
 
 const CLOSE_SIZE = 44
-const BAR_COLLAPSED = 44 // icon bar width when collapsed (padding + icon)
+const BAR_COLLAPSED = 44 // icon bar width when collapsed (padding + trigger)
 const DEFAULT_INPUT_WIDTH = 220
 const GAP = 8
 
@@ -51,12 +51,22 @@ export const GoeySearch = ({
     ? { type: 'spring' as const, bounce, duration: 0.5 }
     : { type: 'tween' as const, duration: 0.3, ease: 'easeInOut' as const }
 
+  // Reset locked width when tabs change so it re-measures
+  const tabsKey = tabs.map(t => `${t.label}|${t.value}`).join(',')
+  useEffect(() => {
+    setLockedWidth(null)
+  }, [tabsKey]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Measure and lock the wrapper width after first paint (only when tabs exist)
   useEffect(() => {
     if (hasTabs && wrapperRef.current && lockedWidth === null) {
       requestAnimationFrame(() => {
         if (wrapperRef.current) {
-          setLockedWidth(wrapperRef.current.offsetWidth)
+          // Measure tabs content directly so grid min-width:0 doesn't affect the result
+          const tabsEl = wrapperRef.current.querySelector('.goey-search-tabs-content') as HTMLElement
+          if (tabsEl) {
+            setLockedWidth(BAR_COLLAPSED + GAP + tabsEl.scrollWidth)
+          }
         }
       })
     }

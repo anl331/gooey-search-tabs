@@ -57,14 +57,21 @@
 }
 
 /* ============================================
-   Right slot — stacks tabs and close button
-   in the same space via grid.
+   Right slot — the pill that morphs from tabs
+   width down to close-button circle. Flex
+   shrinking + overflow:hidden creates the
+   "push into collapse" effect naturally.
    ============================================ */
 .goey-search-right-slot {
   display: grid;
   align-items: center;
   justify-items: end;
   min-width: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  height: 44px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .goey-search-right-slot > * {
@@ -73,7 +80,7 @@
 }
 
 /* ============================================
-   Tabs content — pill background, holds tabs
+   Tabs content — inside the right-slot pill
    ============================================ */
 .goey-search-tabs-content {
   display: flex;
@@ -81,9 +88,6 @@
   gap: 2px;
   height: 44px;
   padding: 4px;
-  border-radius: 999px;
-  background: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .goey-search-tab {
@@ -147,7 +151,8 @@
 }
 
 /* ============================================
-   Close button — own pill background, aligned right
+   Close button — transparent, inside the
+   right-slot pill. Hover shows subtle overlay.
    ============================================ */
 .goey-search-close-content {
   display: flex;
@@ -156,8 +161,7 @@
   width: 44px;
   height: 44px;
   border: none;
-  background: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  background: transparent;
   color: #374151;
   cursor: pointer;
   border-radius: 999px;
@@ -167,7 +171,7 @@
 }
 
 .goey-search-close-content:hover {
-  background: #f9f9f9;
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .goey-search-close-content:focus-visible {

@@ -893,7 +893,6 @@ code {
 .playground-preview {
   display: flex;
   align-items: center;
-  justify-content: center;
   background: var(--card);
   border-radius: 12px;
   padding: 2.5rem 2rem;
@@ -902,6 +901,11 @@ code {
   margin-bottom: 1.5rem;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+.playground-preview > * {
+  margin-inline: auto;
+  flex-shrink: 0;
 }
 
 .playground-controls {

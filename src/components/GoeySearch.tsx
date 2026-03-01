@@ -137,11 +137,16 @@ export const GoeySearch = ({
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Morph transition for the width animations (input + right-slot)
+  // Morph transition for the right-slot width animation
   // Delayed by FADE_DUR so opacity fades first, then width morphs
-  const morphTransition = hasTabs
-    ? { ...transition, delay: FADE_DUR }
-    : transition
+  const morphTransition = { ...transition, delay: FADE_DUR }
+
+  // When hasTabs, the bar uses flex:1 so it fills remaining space as
+  // the right-slot spring-animates. This lets the spring bounce flow
+  // naturally to both pills (bar squishes as right-slot overshoots).
+  const barStyle = hasTabs && lockedWidth
+    ? { flex: '1 1 0%', minWidth: BAR_COLLAPSED, overflow: 'hidden' as const }
+    : undefined
 
   return (
     <LayoutGroup id={instanceId}>
@@ -157,7 +162,7 @@ export const GoeySearch = ({
         data-expanded={expanded}
       >
         {/* Left side: always a pill, content drives the width */}
-        <div className="goey-search-bar">
+        <div className="goey-search-bar" style={barStyle}>
           <button
             className={`goey-search-trigger ${classNames.searchButton ?? ''}`.trim()}
             onClick={expanded ? undefined : handleExpand}
@@ -170,59 +175,82 @@ export const GoeySearch = ({
 
           <AnimatePresence initial={false}>
             {expanded && (
-              <motion.div
-                key="input-area"
-                className="goey-search-input-wrapper"
-                initial={{ width: 0, opacity: 0 }}
-                animate={{
-                  width: inputExpandedWidth,
-                  opacity: 1,
-                  transition: {
-                    ...morphTransition,
-                    opacity: { duration: 0.08, delay: hasTabs ? FADE_DUR : 0 },
-                  },
-                }}
-                exit={{
-                  width: 0,
-                  opacity: 0,
-                  transition: {
-                    ...morphTransition,
-                    opacity: { duration: 0.08 },
-                  },
-                }}
-              >
-                <input
-                  ref={inputRef}
-                  type="text"
-                  className={`goey-search-input ${classNames.input ?? ''}`.trim()}
-                  placeholder={placeholder}
-                  value={searchValue}
-                  onChange={handleInputChange}
-                  onKeyDown={handleKeyDown}
-                  aria-label="Search input"
-                />
-              </motion.div>
+              hasTabs && lockedWidth ? (
+                /* Tabs mode: fixed width input, revealed by bar's overflow:hidden
+                   as the right-slot spring shrinks and bar grows via flex */
+                <motion.div
+                  key="input-area"
+                  className="goey-search-input-wrapper"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, transition: { duration: 0.15, delay: FADE_DUR } }}
+                  exit={{ opacity: 0, transition: { duration: 0.08 } }}
+                  style={{ width: inputExpandedWidth, flexShrink: 0 }}
+                >
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    className={`goey-search-input ${classNames.input ?? ''}`.trim()}
+                    placeholder={placeholder}
+                    value={searchValue}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                    aria-label="Search input"
+                  />
+                </motion.div>
+              ) : (
+                /* No tabs: width animation for standalone input */
+                <motion.div
+                  key="input-area"
+                  className="goey-search-input-wrapper"
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{
+                    width: inputExpandedWidth,
+                    opacity: 1,
+                    transition: { ...transition, opacity: { duration: 0.08 } },
+                  }}
+                  exit={{
+                    width: 0,
+                    opacity: 0,
+                    transition: { ...transition, opacity: { duration: 0.08 } },
+                  }}
+                >
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    className={`goey-search-input ${classNames.input ?? ''}`.trim()}
+                    placeholder={placeholder}
+                    value={searchValue}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                    aria-label="Search input"
+                  />
+                </motion.div>
+              )
             )}
           </AnimatePresence>
         </div>
 
-        {/* Right side: morphing pill (with tabs) */}
+        {/* Right side: morphing pill (with tabs)
+            flex-shrink:0 so the spring bounce isn't suppressed by flex,
+            letting the bar squish naturally as the pill overshoots */}
         {hasTabs && (
           <motion.div
             className="goey-search-right-slot"
             initial={false}
             animate={{ width: expanded ? CLOSE_SIZE : (tabsWidth ?? 'auto') }}
             transition={tabsWidth != null ? morphTransition : { duration: 0 }}
+            style={{ flexShrink: 0 }}
           >
-            {/* Tabs — always rendered, opacity controlled */}
+            {/* Tabs — always rendered, opacity controlled.
+                On collapse: fade in early so tabs are visible during the spring bounce */}
             <motion.div
               className={`goey-search-tabs-content ${classNames.tabList ?? ''}`.trim()}
               role="tablist"
               initial={false}
               animate={{ opacity: expanded ? 0 : 1 }}
               transition={{
-                duration: FADE_DUR,
-                delay: expanded ? 0 : FADE_DUR + morphSettleTime,
+                duration: expanded ? FADE_DUR : 0.2,
+                delay: expanded ? 0 : FADE_DUR + morphSettleTime * 0.3,
               }}
               style={{ pointerEvents: expanded ? 'none' : 'auto' }}
             >
@@ -261,14 +289,15 @@ export const GoeySearch = ({
               })}
             </motion.div>
 
-            {/* Close button — always rendered, opacity controlled */}
+            {/* Close button — always rendered, opacity controlled.
+                On expand: fade in early so X is visible during the spring bounce */}
             <motion.button
               className={`goey-search-close-content ${classNames.closeButton ?? ''}`.trim()}
               initial={false}
               animate={{ opacity: expanded ? 1 : 0 }}
               transition={{
-                duration: FADE_DUR,
-                delay: expanded ? FADE_DUR + morphSettleTime : 0,
+                duration: expanded ? 0.2 : FADE_DUR,
+                delay: expanded ? FADE_DUR + morphSettleTime * 0.3 : 0,
               }}
               onClick={handleCollapse}
               aria-label="Close search"

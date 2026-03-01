@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useId } from 'react'
-import { motion, AnimatePresence, LayoutGroup, useAnimationControls } from 'framer-motion'
+import { motion, AnimatePresence, LayoutGroup, animate } from 'framer-motion'
 import type { GoeySearchProps } from '../types'
 import { animationPresets } from '../presets'
 import { SearchIcon } from './SearchIcon'
@@ -43,8 +43,8 @@ export const GoeySearch = ({
   const inputRef = useRef<HTMLInputElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const [lockedWidth, setLockedWidth] = useState<number | null>(null)
-  const barControls = useAnimationControls()
-  const rightSlotControls = useAnimationControls()
+  const barRef = useRef<HTMLDivElement>(null)
+  const rightSlotRef = useRef<HTMLDivElement>(null)
   const wasExpandedRef = useRef(defaultExpanded)
 
   const searchValue = controlledValue ?? internalValue
@@ -140,47 +140,74 @@ export const GoeySearch = ({
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Collapse squish — mirrors the expand overshoot. During expand the input
-  // spring naturally overshoots, compressing the right-slot. During collapse
-  // the input width clips at 0 so there's no natural undershoot. We simulate
-  // it by jumping to the "overshoot" state partway through the morph (while
-  // the bar is still shrinking) then springing back to 1 — so the squish
-  // blends into the morph as one continuous motion.
+  // spring naturally overshoots, compressing the right-slot via flex layout.
+  // During collapse the input clips at 0, so no natural undershoot exists.
+  // We fix this by swapping flex roles at the start of the collapse: the
+  // right-slot gets an explicit width animated by a spring from 44→tabsWidth.
+  // The bar becomes flex-shrink:1 so the spring's overshoot compresses it —
+  // real layout compression, identical to what happens on expand.
+  // Starting from 44px gives 184px of travel, matching the expand's 0→184px.
   useEffect(() => {
     const wasExpanded = wasExpandedRef.current
     wasExpandedRef.current = expanded
 
-    if (!expanded && wasExpanded && hasTabs) {
-      const springBounce = Math.min(bounce + 0.1, 0.4)
-      // Fire when the morph is ~40% done so the squish overlaps with
-      // the bar still shrinking, rather than happening after it stops
-      const delay = (FADE_DUR + morphSettleTime * 0.4) * 1000
-      const timer = setTimeout(async () => {
-        // Quick compress while morph is still animating — blends in
-        await Promise.all([
-          barControls.start({ scaleX: 0.9 }, { duration: 0.07 }),
-          rightSlotControls.start({ scaleX: 1.05 }, { duration: 0.07 }),
-        ])
-        // Spring back to 1, creating overshoot → settle like expand does
-        barControls.start({ scaleX: 1 }, {
+    if (!expanded && wasExpanded && hasTabs && lockedWidth) {
+      const barEl = barRef.current
+      const rsEl = rightSlotRef.current
+      if (!barEl || !rsEl) return
+
+      const targetRsWidth = lockedWidth - BAR_COLLAPSED - GAP
+      // Start after the close-button fades out, synchronized with input exit
+      const delay = FADE_DUR * 1000
+      let playback: { stop: () => void } | null = null
+
+      const timer = setTimeout(() => {
+        const currentRsWidth = rsEl.getBoundingClientRect().width
+
+        // Lock right-slot at current width — no visual jump
+        rsEl.style.width = currentRsWidth + 'px'
+        rsEl.style.flexShrink = '0'
+
+        // Make bar compressible so spring overshoot squishes it
+        barEl.style.flexShrink = '1'
+        barEl.style.overflow = 'hidden'
+        barEl.style.minWidth = '0px'
+
+        // Animate right-slot to target with the same spring as expand.
+        // Full travel distance (44→228 = 184px) matches expand (0→184px),
+        // producing identical overshoot and therefore identical squish.
+        playback = animate(currentRsWidth, targetRsWidth, {
           type: 'spring',
-          bounce: springBounce,
-          duration: 0.4,
-        })
-        rightSlotControls.start({ scaleX: 1 }, {
-          type: 'spring',
-          bounce: springBounce,
-          duration: 0.4,
+          bounce,
+          duration: 0.5,
+          onUpdate: (v) => {
+            rsEl.style.width = v + 'px'
+          },
+          onComplete: () => {
+            rsEl.style.width = ''
+            rsEl.style.flexShrink = ''
+            barEl.style.flexShrink = ''
+            barEl.style.overflow = ''
+            barEl.style.minWidth = ''
+          },
         })
       }, delay)
+
       return () => {
         clearTimeout(timer)
-        barControls.stop()
-        barControls.set({ scaleX: 1 })
-        rightSlotControls.stop()
-        rightSlotControls.set({ scaleX: 1 })
+        if (playback) playback.stop()
+        if (barEl) {
+          barEl.style.flexShrink = ''
+          barEl.style.overflow = ''
+          barEl.style.minWidth = ''
+        }
+        if (rsEl) {
+          rsEl.style.width = ''
+          rsEl.style.flexShrink = ''
+        }
       }
     }
-  }, [expanded, hasTabs, barControls, rightSlotControls, bounce, morphSettleTime])
+  }, [expanded, hasTabs, lockedWidth, bounce])
 
   // Input transition delayed by FADE_DUR so tabs/close fades first
   const inputTransition = {
@@ -210,7 +237,7 @@ export const GoeySearch = ({
         {/* Left side: bar grows as input springs in, pushing right-slot.
             The input spring creates the bounce — bar overshoots on expand,
             and on collapse the bounce-back compresses the right-slot from the left. */}
-        <motion.div className="goey-search-bar" animate={barControls} style={{ transformOrigin: 'left center' }}>
+        <div ref={barRef} className="goey-search-bar">
           <button
             className={`goey-search-trigger ${classNames.searchButton ?? ''}`.trim()}
             onClick={expanded ? undefined : handleExpand}
@@ -243,13 +270,13 @@ export const GoeySearch = ({
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.div>
+        </div>
 
         {/* Right side: pill that morphs from tabs to close.
             Width is flex-driven (passively follows the bar's spring).
             Tabs and close are always rendered, opacity sequenced. */}
         {hasTabs && (
-          <motion.div className="goey-search-right-slot" animate={rightSlotControls} style={{ transformOrigin: 'right center' }}>
+          <div ref={rightSlotRef} className="goey-search-right-slot">
             {/* Tabs — fade out immediately on expand, fade in early during collapse bounce */}
             <motion.div
               className={`goey-search-tabs-content ${classNames.tabList ?? ''}`.trim()}
@@ -313,7 +340,7 @@ export const GoeySearch = ({
             >
               <CloseIcon size={18} />
             </motion.button>
-          </motion.div>
+          </div>
         )}
 
         {/* Right side: simple close button (no-tabs case) */}

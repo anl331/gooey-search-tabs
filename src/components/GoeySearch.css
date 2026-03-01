@@ -1,0 +1,156 @@
+/* ============================================
+   Container — pill-shaped outer wrapper
+   ============================================ */
+.goey-search-container {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 4px;
+  gap: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', sans-serif;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ============================================
+   Search trigger button (circle)
+   ============================================ */
+.goey-search-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #f3f4f6;
+  color: #374151;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.goey-search-trigger:hover {
+  background: #e5e7eb;
+}
+
+.goey-search-trigger:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* ============================================
+   Tab list
+   ============================================ */
+.goey-search-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 4px;
+}
+
+.goey-search-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+  font-family: inherit;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.goey-search-tab:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.goey-search-tab:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: -2px;
+}
+
+.goey-search-tab--active {
+  background: #fce7f3;
+  color: #db2777;
+}
+
+.goey-search-tab--active:hover {
+  background: #fbcfe8;
+}
+
+.goey-search-tab-icon {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  line-height: 0;
+}
+
+/* ============================================
+   Search input (expanded state)
+   ============================================ */
+.goey-search-input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.goey-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1f2937;
+  outline: none;
+  padding: 8px 12px;
+  min-width: 0;
+}
+
+.goey-search-input::placeholder {
+  color: #9ca3af;
+}
+
+/* ============================================
+   Close button (expanded state)
+   ============================================ */
+.goey-search-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.goey-search-close:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.goey-search-close:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
